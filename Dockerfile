@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.70 as builder
+FROM rust:latest as builder
 
 WORKDIR /usr/src/hello-world-api
 
