@@ -1,0 +1,20 @@
+# Distroless - Most secure option (~30MB final)
+FROM rust:latest as builder
+
+WORKDIR /usr/src/hello-world-api
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release && rm src/main.rs
+COPY src ./src
+RUN cargo build --release
+
+# Runtime stage - Distroless (most secure, no shell)
+FROM gcr.io/distroless/cc-debian12
+
+WORKDIR /app
+COPY --from=builder /usr/src/hello-world-api/target/release/hello-world-api /app/hello-world-api
+
+# Note: Distroless doesn't support debug script or user creation
+# But it's the most secure option
+EXPOSE 8080/tcp
+ENTRYPOINT ["/app/hello-world-api"]
