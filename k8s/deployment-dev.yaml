@@ -1,21 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-world-api
+  name: hello-world-api-dev
   labels:
     app: hello-world-api
-    version: v1
+    version: dev
+    environment: development
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: hello-world-api
-      version: v1
+      version: dev
   template:
     metadata:
       labels:
         app: hello-world-api
-        version: v1
+        version: dev
+        environment: development
     spec:
       containers:
       - name: hello-world-api
@@ -28,37 +30,39 @@ spec:
         - name: PORT
           value: "8080"
         - name: COUNTDOWN_SECONDS
-          value: "10"  # Short countdown for faster OpenShift startup
+          value: "300"  # 5-minute countdown for development/testing
+        - name: ENVIRONMENT
+          value: "development"
         resources:
           requests:
             memory: "64Mi"
             cpu: "50m"
           limits:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "256Mi"
+            cpu: "200m"
         startupProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 6  # Allow up to 30 seconds for startup
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 35  # Allow up to 350 seconds (300s countdown + buffer)
         livenessProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
+          initialDelaySeconds: 350
+          periodSeconds: 30
+          timeoutSeconds: 10
           failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 320
+          periodSeconds: 10
+          timeoutSeconds: 5
           failureThreshold: 3
         securityContext:
           allowPrivilegeEscalation: false
@@ -73,31 +77,17 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-world-api-service
+  name: hello-world-api-dev-service
   labels:
     app: hello-world-api
+    environment: development
 spec:
   selector:
     app: hello-world-api
+    version: dev
   ports:
   - name: http
     port: 8080
     targetPort: 8080
     protocol: TCP
   type: ClusterIP
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: hello-world-api-route
-  labels:
-    app: hello-world-api
-spec:
-  to:
-    kind: Service
-    name: hello-world-api-service
-  port:
-    targetPort: http
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect

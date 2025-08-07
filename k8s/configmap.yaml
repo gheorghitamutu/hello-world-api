@@ -6,6 +6,7 @@ metadata:
     app: hello-world-api
 data:
   PORT: "8080"
+  COUNTDOWN_SECONDS: "10"  # Short countdown for OpenShift (use 300 for development)
   LOG_LEVEL: "info"
   ENVIRONMENT: "production"
 ---

@@ -7,18 +7,11 @@ async fn main() {
     println!("=== Hello World API Starting ===");
     eprintln!("=== Hello World API Starting ===");
     
-    // Countdown loop for 5 minutes (300 seconds)
-    println!("Starting countdown before server initialization...");
-    eprintln!("Starting countdown before server initialization...");
-    
-    for seconds_left in (1..=300).rev() {
-        println!("⏰ Time left: {} seconds", seconds_left);
-        eprintln!("⏰ Time left: {} seconds", seconds_left);
-        sleep(Duration::from_secs(1)).await;
-    }
-    
-    println!("⏰ Countdown complete! Initializing server...");
-    eprintln!("⏰ Countdown complete! Initializing server...");
+    // Get countdown duration from environment or default to 10 seconds for faster startup
+    let countdown_seconds: u64 = env::var("COUNTDOWN_SECONDS")
+        .unwrap_or_else(|_| "10".to_string())
+        .parse()
+        .unwrap_or(10);
     
     // Get port from environment or default to 8080
     let port: u16 = env::var("PORT")
@@ -26,10 +19,29 @@ async fn main() {
         .parse()
         .unwrap_or(8080);
     
-    println!("Environment check:");
+    println!("Configuration:");
+    println!("- COUNTDOWN_SECONDS: {}", countdown_seconds);
     println!("- PORT: {}", port);
     println!("- User: {:?}", env::var("USER"));
     println!("- Home: {:?}", env::var("HOME"));
+    
+    // Countdown loop - configurable duration
+    if countdown_seconds > 0 {
+        println!("Starting countdown before server initialization...");
+        eprintln!("Starting countdown before server initialization...");
+        
+        for seconds_left in (1..=countdown_seconds).rev() {
+            println!("⏰ Time left: {} seconds", seconds_left);
+            eprintln!("⏰ Time left: {} seconds", seconds_left);
+            sleep(Duration::from_secs(1)).await;
+        }
+        
+        println!("⏰ Countdown complete! Initializing server...");
+        eprintln!("⏰ Countdown complete! Initializing server...");
+    } else {
+        println!("⏰ Countdown disabled, starting server immediately...");
+        eprintln!("⏰ Countdown disabled, starting server immediately...");
+    }
     
     println!("Server binding to 0.0.0.0:{}...", port);
     eprintln!("Server binding to 0.0.0.0:{}...", port);
@@ -55,13 +67,17 @@ async fn main() {
 
     let routes = hello.or(health).or(root);
     
-    // Try to bind to the primary port first
+    // Start server with error handling
     println!("✅ Starting server on port {}", port);
     println!("🚀 Access the API at:");
     println!("   - http://localhost:{}/", port);
     println!("   - http://localhost:{}/hello", port);
     println!("   - http://localhost:{}/health", port);
     eprintln!("✅ Server starting on port {}", port);
+    
+    // Simple server start - let Warp handle errors
+    println!("🔗 Binding to 0.0.0.0:{}", port);
+    eprintln!("🔗 Binding to 0.0.0.0:{}", port);
     
     warp::serve(routes)
         .run(([0, 0, 0, 0], port))

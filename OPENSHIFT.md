@@ -82,8 +82,17 @@ oc apply -f k8s/deployment.yaml
 The application supports these environment variables:
 
 - `PORT`: Server port (default: 8080)
+- `COUNTDOWN_SECONDS`: Startup countdown duration (default: 10, use 300 for development)
 - `LOG_LEVEL`: Logging level
 - `ENVIRONMENT`: Environment name
+
+### Countdown Timer Configuration
+
+The application includes a configurable countdown timer before starting the web server:
+
+- **Production**: Set `COUNTDOWN_SECONDS=10` for fast startup
+- **Development/Testing**: Set `COUNTDOWN_SECONDS=300` for extended observation
+- **Disabled**: Set `COUNTDOWN_SECONDS=0` to skip countdown entirely
 
 ### Secrets Management
 
@@ -133,12 +142,63 @@ After deployment, the application will be available at:
 
 ## Troubleshooting
 
+### CrashLoopBackOff Issues
+
+If you're experiencing CrashLoopBackOff, check these common causes:
+
+#### 1. **Countdown Timer Too Long**
+```bash
+# Check current countdown setting
+oc get deployment hello-world-api -o yaml | grep -A5 COUNTDOWN_SECONDS
+
+# Fix: Set shorter countdown for production
+oc set env deployment/hello-world-api COUNTDOWN_SECONDS=10
+
+# Or use the production deployment which has optimized settings
+oc apply -f k8s/deployment.yaml
+```
+
+#### 2. **Health Check Timing**
+```bash
+# Check probe configuration
+oc describe deployment hello-world-api
+
+# The startup probe should allow enough time for countdown + server start
+# Production config: 10s countdown + 20s buffer = 30s max startup time
+# Development config: 300s countdown + 50s buffer = 350s max startup time
+```
+
+#### 3. **Resource Limits**
+```bash
+# Check if pod is being killed due to resource limits
+oc describe pod <pod-name>
+
+# Look for events like "OOMKilled" or "Evicted"
+# Increase memory limits if needed:
+oc patch deployment hello-world-api -p '{"spec":{"template":{"spec":{"containers":[{"name":"hello-world-api","resources":{"limits":{"memory":"256Mi"}}}]}}}}'
+```
+
+### Deployment Options
+
+#### Quick Start (Production - Fast Startup)
+```bash
+# Uses 10-second countdown, optimized health checks
+oc apply -f k8s/deployment.yaml
+```
+
+#### Development (Extended Countdown)
+```bash
+# Uses 300-second countdown for debugging
+oc apply -f k8s/deployment-dev.yaml
+```
+
 ### Common Issues
 
-1. **Long Startup Time**: The application has a 5-minute countdown before serving requests
-2. **Health Check Failures**: Ensure probes have sufficient initial delay
-3. **Permission Issues**: Verify the application runs as non-root user
+1. **Long Startup Time**: The application has a configurable countdown before serving requests
+2. **Health Check Failures**: Ensure probes have sufficient initial delay based on countdown setting
+3. **Permission Issues**: Verify the application runs as non-root user (UID 1001)
 4. **Build Failures**: Check BuildConfig logs for compilation errors
+5. **Port Conflicts**: Application will try alternative port 3000 if 8080 fails
 
 ### Useful Commands
 
