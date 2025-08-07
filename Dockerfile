@@ -16,25 +16,8 @@ RUN cargo build --release && rm src/main.rs
 COPY src ./src
 RUN cargo build --release
 
-# Runtime stage - Use Debian slim for minimal size
-FROM debian:12-slim
-
-# Install CA certificates, debugging tools, and create non-root user
-RUN apt-get update && \
-    apt-get install -y \
-        ca-certificates \
-        procps \
-        util-linux \
-        findutils \
-        vim-tiny \
-        less \
-        strace \
-        curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    # Create a non-root user for OpenShift security
-    useradd -r -u 1001 -g root -s /sbin/nologin \
-            -c "Default Application User" appuser
+# Runtime stage - Use Distroless for maximum security and minimal size
+FROM gcr.io/distroless/cc-debian12:latest
 
 # Set the working directory
 WORKDIR /app
@@ -42,20 +25,12 @@ WORKDIR /app
 # Copy the compiled binary from the builder stage
 COPY --from=builder /usr/src/hello-world-api/target/release/hello-world-api /app/hello-world-api
 
-# Copy debug script
-COPY debug.sh /app/debug.sh
+# Note: Distroless doesn't support package installation, users, or shell scripts
+# This provides maximum security but minimal debugging capabilities
+# For debugging, use Dockerfile.debian-slim variant instead
 
-# Set proper ownership and permissions for OpenShift
-RUN chown -R 1001:0 /app && \
-    chmod -R g+rw /app && \
-    chmod +x /app/hello-world-api && \
-    chmod +x /app/debug.sh
-
-# Switch to non-root user
-USER 1001
-
-# Expose the port (OpenShift will dynamically assign ports)
+# Expose the port
 EXPOSE 8080/tcp
 
-# Use debug script as entrypoint for better monitoring and debugging
-ENTRYPOINT ["/app/debug.sh", "run"]
+# Direct binary execution (no debug script support in distroless)
+ENTRYPOINT ["/app/hello-world-api"]
