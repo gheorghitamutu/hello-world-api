@@ -28,7 +28,7 @@ WORKDIR /app
 COPY --from=builder /usr/src/hello-world-api/target/release/hello-world-api /app/hello-world-api
 
 # Expose the port
-EXPOSE 8080
+# EXPOSE 8080
 
 # Run the binary
 CMD ["./hello-world-api"]
