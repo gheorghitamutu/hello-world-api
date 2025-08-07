@@ -253,12 +253,11 @@ oc exec -it $POD_NAME -- /bin/sh
 ### Available Debug Tools
 
 The container includes these debugging tools:
-- `ps`, `top`, `htop` - Process monitoring
+- `ps`, `top`, `pgrep` - Process monitoring
 - `curl` - API testing
 - `strace` - System call tracing
-- `lsof` - Open files and network connections
 - `vim`, `less` - Text viewing/editing
-- `netstat`, `ss` - Network monitoring
+- `netstat`, `ss` - Network monitoring (where available)
 
 ### Debug Script Usage
 

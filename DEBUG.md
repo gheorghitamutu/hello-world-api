@@ -8,15 +8,15 @@ The enhanced Dockerfile now includes debugging tools and utilities to help you m
 
 The container now includes these packages:
 - **procps-ng**: Provides `ps`, `top`, `pgrep`, `pkill`
-- **util-linux**: Provides `lsof`, `kill`, and other utilities
+- **util-linux**: Provides `kill`, and other utilities
 - **findutils**: Provides `find`, `xargs`
 - **which**: Locate commands
 - **curl**: Test HTTP endpoints
 - **vim-minimal**: Basic text editor
 - **less**: Pager for viewing files
 - **strace**: System call tracer
-- **lsof**: List open files
-- **htop**: Interactive process viewer
+
+Note: Some tools like `htop` and `lsof` are not available in UBI minimal, but alternatives are provided in the debug script.
 
 ## Debugging Approaches
 

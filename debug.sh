@@ -41,10 +41,13 @@ show_process_info() {
     ps aux
     echo
     echo "Memory usage:"
-    free -h
+    free -h 2>/dev/null || cat /proc/meminfo | head -10
     echo
     echo "Disk usage:"
     df -h
+    echo
+    echo "Load average:"
+    cat /proc/loadavg
     echo
 }
 
@@ -52,13 +55,13 @@ show_process_info() {
 test_api() {
     echo "=== API Testing ==="
     echo "Testing /health endpoint:"
-    curl -s -w "\nHTTP Status: %{http_code}\n" http://localhost:8080/health || echo "Failed to connect"
+    curl -s -w "\nHTTP Status: %{http_code}\n" http://localhost:8080/health 2>/dev/null || echo "Failed to connect (curl may be curl-minimal with limited options)"
     echo
     echo "Testing /hello endpoint:"
-    curl -s -w "\nHTTP Status: %{http_code}\n" http://localhost:8080/hello || echo "Failed to connect"
+    curl -s -w "\nHTTP Status: %{http_code}\n" http://localhost:8080/hello 2>/dev/null || echo "Failed to connect"
     echo
     echo "Testing / endpoint:"
-    curl -s -w "\nHTTP Status: %{http_code}\n" http://localhost:8080/ || echo "Failed to connect"
+    curl -s -w "\nHTTP Status: %{http_code}\n" http://localhost:8080/ 2>/dev/null || echo "Failed to connect"
     echo
 }
 
@@ -78,10 +81,18 @@ show_env() {
 show_network() {
     echo "=== Network Information ==="
     echo "Listening ports:"
-    netstat -tlnp 2>/dev/null || ss -tlnp
+    netstat -tlnp 2>/dev/null || ss -tlnp 2>/dev/null || echo "netstat/ss not available"
     echo
     echo "Network interfaces:"
-    ip addr show 2>/dev/null || ifconfig
+    ip addr show 2>/dev/null || cat /proc/net/dev
+    echo
+    echo "Open files (if available):"
+    if command -v lsof >/dev/null 2>&1; then
+        lsof | head -20
+    else
+        echo "lsof not available - showing /proc/*/fd for main process:"
+        ls -la /proc/self/fd/ 2>/dev/null || echo "Cannot access file descriptors"
+    fi
     echo
 }
 

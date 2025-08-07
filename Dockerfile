@@ -27,12 +27,9 @@ RUN microdnf update -y && \
         util-linux \
         findutils \
         which \
-        curl \
         vim-minimal \
         less \
-        strace \
-        lsof \
-        htop && \
+        strace && \
     microdnf clean all && \
     # Create a non-root user for OpenShift security
     useradd -r -u 1001 -g root -s /sbin/nologin \
@@ -59,5 +56,5 @@ USER 1001
 # Expose the port (OpenShift will dynamically assign ports)
 EXPOSE 8080
 
-# Use ENTRYPOINT for better signal handling in Kubernetes
-ENTRYPOINT ["/app/hello-world-api"]
+# Use debug script as entrypoint for better monitoring and debugging
+ENTRYPOINT ["/app/debug.sh", "run"]
