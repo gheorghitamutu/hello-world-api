@@ -1,10 +1,24 @@
 use warp::Filter;
 use std::env;
+use tokio::time::{sleep, Duration};
 
 #[tokio::main]
 async fn main() {
     println!("=== Hello World API Starting ===");
     eprintln!("=== Hello World API Starting ===");
+    
+    // Countdown loop for 5 minutes (300 seconds)
+    println!("Starting countdown before server initialization...");
+    eprintln!("Starting countdown before server initialization...");
+    
+    for seconds_left in (1..=300).rev() {
+        println!("⏰ Time left: {} seconds", seconds_left);
+        eprintln!("⏰ Time left: {} seconds", seconds_left);
+        sleep(Duration::from_secs(1)).await;
+    }
+    
+    println!("⏰ Countdown complete! Initializing server...");
+    eprintln!("⏰ Countdown complete! Initializing server...");
     
     // Get port from environment or default to 8080
     let port: u16 = env::var("PORT")
