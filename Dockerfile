@@ -6,4 +6,4 @@ RUN cargo build --release
 
 EXPOSE 8080/tcp
 
-CMD ["./target/release/hello_world_api"]
+CMD ["./target/release/hello-world-api"]
