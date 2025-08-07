@@ -19,9 +19,20 @@ RUN cargo build --release
 # Runtime stage - Use Red Hat UBI for better OpenShift compatibility
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
-# Install CA certificates and create non-root user
+# Install CA certificates, debugging tools, and create non-root user
 RUN microdnf update -y && \
-    microdnf install -y ca-certificates && \
+    microdnf install -y \
+        ca-certificates \
+        procps-ng \
+        util-linux \
+        findutils \
+        which \
+        curl \
+        vim-minimal \
+        less \
+        strace \
+        lsof \
+        htop && \
     microdnf clean all && \
     # Create a non-root user for OpenShift security
     useradd -r -u 1001 -g root -s /sbin/nologin \
@@ -33,10 +44,14 @@ WORKDIR /app
 # Copy the compiled binary from the builder stage
 COPY --from=builder /usr/src/hello-world-api/target/release/hello-world-api /app/hello-world-api
 
+# Copy debug script
+COPY debug.sh /app/debug.sh
+
 # Set proper ownership and permissions for OpenShift
 RUN chown -R 1001:0 /app && \
     chmod -R g+rw /app && \
-    chmod +x /app/hello-world-api
+    chmod +x /app/hello-world-api && \
+    chmod +x /app/debug.sh
 
 # Switch to non-root user
 USER 1001

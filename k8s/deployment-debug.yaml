@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-api-debug
+  labels:
+    app: hello-world-api-debug
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world-api-debug
+  template:
+    metadata:
+      labels:
+        app: hello-world-api-debug
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 0
+      containers:
+      - name: hello-world-api
+        image: hello-world-api:latest
+        # Override entrypoint for debugging - sleep instead of running app directly
+        command: ["/bin/sh"]
+        args: ["-c", "echo 'Container started for debugging. Use: oc exec -it <pod> -- /bin/sh' && sleep 3600"]
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: COUNTDOWN_SECONDS
+          value: "300"  # Long countdown for debugging
+        - name: RUST_LOG
+          value: "debug"
+        - name: RUST_BACKTRACE
+          value: "1"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        # No health checks for debug mode
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world-api-debug-service
+  labels:
+    app: hello-world-api-debug
+spec:
+  selector:
+    app: hello-world-api-debug
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP

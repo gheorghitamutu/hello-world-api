@@ -232,3 +232,91 @@ oc logs -f bc/hello-world-api-build
 4. **Monitoring**: Integrate with Prometheus/Grafana
 5. **Logging**: Configure centralized logging with ELK stack
 6. **Backup**: Implement backup strategies for configuration and data
+
+## Debugging in OpenShift
+
+### Debug Mode Deployment
+
+For debugging purposes, use the special debug deployment that keeps the container alive:
+
+```bash
+# Deploy in debug mode
+oc apply -f k8s/deployment-debug.yaml
+
+# Get pod name
+POD_NAME=$(oc get pods -l app=hello-world-api-debug -o jsonpath='{.items[0].metadata.name}')
+
+# Exec into the pod for debugging
+oc exec -it $POD_NAME -- /bin/sh
+```
+
+### Available Debug Tools
+
+The container includes these debugging tools:
+- `ps`, `top`, `htop` - Process monitoring
+- `curl` - API testing
+- `strace` - System call tracing
+- `lsof` - Open files and network connections
+- `vim`, `less` - Text viewing/editing
+- `netstat`, `ss` - Network monitoring
+
+### Debug Script Usage
+
+Inside the pod, use the built-in debug script:
+
+```bash
+# Show all options
+./debug.sh
+
+# Run app with exit code monitoring
+./debug.sh run
+
+# Test API endpoints
+./debug.sh test
+
+# Show system information
+./debug.sh info
+
+# Continuous monitoring
+./debug.sh monitor
+```
+
+### Common Debug Scenarios
+
+#### CrashLoopBackOff Investigation
+```bash
+# Check pod logs
+oc logs $POD_NAME --previous
+
+# Exec into debug pod
+oc exec -it $POD_NAME -- ./debug.sh run
+
+# Monitor process exit codes
+oc exec -it $POD_NAME -- /bin/sh -c 'echo $$; exec /app/hello-world-api'
+```
+
+#### Network Connectivity Issues
+```bash
+# Test from inside pod
+oc exec -it $POD_NAME -- curl http://localhost:8080/health
+
+# Check network interfaces
+oc exec -it $POD_NAME -- ip addr show
+
+# Check listening ports
+oc exec -it $POD_NAME -- netstat -tlnp
+```
+
+#### Performance Issues
+```bash
+# Monitor resource usage
+oc exec -it $POD_NAME -- htop
+
+# Check memory
+oc exec -it $POD_NAME -- free -h
+
+# Monitor process
+oc exec -it $POD_NAME -- top
+```
+
+For detailed debugging instructions, see [DEBUG.md](DEBUG.md).

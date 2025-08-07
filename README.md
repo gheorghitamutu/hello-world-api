@@ -55,6 +55,28 @@ docker run -p 8000:8000 hello-world-api
 
 The API will be accessible at `http://localhost:8000`.
 
+## Debugging
+
+This project includes comprehensive debugging tools for Kubernetes/OpenShift environments. See [DEBUG.md](DEBUG.md) for detailed debugging instructions.
+
+### Quick Debug Setup
+
+```bash
+# Deploy in debug mode (container sleeps for manual debugging)
+oc apply -f k8s/deployment-debug.yaml
+
+# Exec into the pod
+POD_NAME=$(oc get pods -l app=hello-world-api-debug -o jsonpath='{.items[0].metadata.name}')
+oc exec -it $POD_NAME -- /bin/sh
+
+# Use the debug script
+./debug.sh run    # Run with monitoring
+./debug.sh info   # Show system info
+./debug.sh test   # Test API endpoints
+```
+
+The container includes debugging tools like `ps`, `top`, `curl`, `strace`, `lsof`, and `htop`.
+
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
