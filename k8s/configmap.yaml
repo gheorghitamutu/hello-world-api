@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hello-world-api-config
+  labels:
+    app: hello-world-api
+data:
+  PORT: "8080"
+  LOG_LEVEL: "info"
+  ENVIRONMENT: "production"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hello-world-api-secrets
+  labels:
+    app: hello-world-api
+type: Opaque
+data:
+  # Base64 encoded secrets (example)
+  # DATABASE_URL: <base64-encoded-value>
+  API_KEY: ""  # Add your base64 encoded secrets here

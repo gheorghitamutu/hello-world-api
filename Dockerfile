@@ -16,19 +16,33 @@ RUN cargo build --release && rm src/main.rs
 COPY src ./src
 RUN cargo build --release
 
-# Runtime stage
-FROM debian:bookworm-slim
+# Runtime stage - Use Red Hat UBI for better OpenShift compatibility
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
-# Install CA certificates for HTTPS requests (if needed)
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+# Install CA certificates and create non-root user
+RUN microdnf update -y && \
+    microdnf install -y ca-certificates && \
+    microdnf clean all && \
+    # Create a non-root user for OpenShift security
+    useradd -r -u 1001 -g root -s /sbin/nologin \
+            -c "Default Application User" appuser
 
+# Set the working directory
 WORKDIR /app
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /usr/src/hello-world-api/target/release/hello-world-api /app/hello-world-api
 
-# Expose the port
+# Set proper ownership and permissions for OpenShift
+RUN chown -R 1001:0 /app && \
+    chmod -R g+rw /app && \
+    chmod +x /app/hello-world-api
+
+# Switch to non-root user
+USER 1001
+
+# Expose the port (OpenShift will dynamically assign ports)
 EXPOSE 8080
 
-# Run the binary
-CMD ["./hello-world-api"]
+# Use ENTRYPOINT for better signal handling in Kubernetes
+ENTRYPOINT ["/app/hello-world-api"]
