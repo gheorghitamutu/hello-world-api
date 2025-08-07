@@ -17,7 +17,7 @@ COPY src ./src
 RUN cargo build --release
 
 # Runtime stage - Use Distroless for maximum security and minimal size
-FROM rust:latest as runtime
+FROM gcr.io/distroless/cc-debian12:latest
 
 # Set the working directory
 WORKDIR /app
