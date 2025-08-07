@@ -33,4 +33,4 @@ COPY --from=builder /usr/src/hello-world-api/target/release/hello-world-api /app
 EXPOSE 8080/tcp
 
 # Direct binary execution (no debug script support in distroless)
-ENTRYPOINT ["/app/hello-world-api"]
+CMD ["/app/hello-world-api"]
